@@ -9,10 +9,11 @@ import Video from "./components/video/video.compoent"
 function App() {
 
   const [configuration, setConfiguration] = useState({
-    iceServers: [{
-      urls: ['stun:alkaline.vercel.app:443', 'stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'],
-    },],
-    iceCandidatePoolSize: 10,
+    'iceServers': [
+      {'urls': 'stun:stun.services.mozilla.com'},
+      {'urls': 'stun:stun.l.google.com:19302'},
+      {'urls': 'turn:/alkaline.vercel.app','credential': 'webrtc','username': 'gurkiransinghk@gmail.com'}
+    ]
   })
 
   const [localStream, setLocalStream] = useState(null);
