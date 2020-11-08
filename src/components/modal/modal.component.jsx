@@ -19,7 +19,6 @@ export default function Modal({ modalRef, setPeerConnection, configuration, setC
     }
 
     const {roomId} = create;
-    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -28,7 +27,7 @@ export default function Modal({ modalRef, setPeerConnection, configuration, setC
         if(roomIdData.map(data => data.roomId === roomId && data.answer)[0] && roomIdData.map(data => data.roomId === roomId && data.answer)[0].type){
             alert("Please, enter different Room ID. This already exists.")
         }
-        setRoomId(roomId)
+        setRoomId(roomId.trim())
         setPeerConnection(new RTCPeerConnection(configuration));
         setCon2(true);
 
