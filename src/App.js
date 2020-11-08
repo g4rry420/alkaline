@@ -10,7 +10,7 @@ function App() {
 
   const [configuration, setConfiguration] = useState({
     iceServers: [{
-      urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302',],
+      urls: ['stun:alkaline.vercel.app:443', 'stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'],
     },],
     iceCandidatePoolSize: 10,
   })
