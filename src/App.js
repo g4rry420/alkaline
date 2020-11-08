@@ -12,7 +12,7 @@ function App() {
     'iceServers': [
       {'urls': 'stun:stun.services.mozilla.com'},
       {'urls': 'stun:stun.l.google.com:19302'},
-      {'urls': 'turn:/alkaline.vercel.app','credential': 'webrtc','username': 'gurkiransinghk@gmail.com'}
+      {'urls': 'stun:alkaline.vercel.app:443'}
     ]
   })
 
