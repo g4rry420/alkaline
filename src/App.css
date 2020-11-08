@@ -15,7 +15,7 @@
   border: 1px solid var(--primaryColor);
   background-color: transparent;
 }
-table, th, td {
+ td {
   border: 1px solid var(--primaryColor);
   font-size: 1.5rem;
 }
@@ -24,6 +24,40 @@ table{
 }
 .video-container video{
   background-color: black;
-  height: 480px;
-  width: 640px;
+}
+.btn-container{
+  justify-content: space-evenly;
+}
+.table-id-data{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: none;
+  border-right: none;
+}
+.table-id-data img{
+  width: 1.2vw;
+  cursor: pointer;
+}
+
+@media only screen and (min-width: 701px) {
+  .video-container{
+    flex-wrap: wrap;
+  }
+  .video-container video{
+    height: 480px;
+    width: 540px;
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  .video-container{
+    flex-direction: column;
+  }
+  .btn-container{
+    flex-direction: column;
+  }
+  .btn-container .btn-open{
+    margin: 1rem 0;
+  }
 }

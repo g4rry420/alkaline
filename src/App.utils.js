@@ -1,8 +1,8 @@
 import { firestore } from "./firebase/firebase.conf"
 
-export const createRoomCall = async (peerConnection, localStream, setRoomId, remoteStream) => {
+export const createRoomCall = async (peerConnection, localStream, setRoomId, remoteStream, localShareRef) => {
     localStream.getTracks().forEach(track => {
-      peerConnection.addTrack(track, localStream)
+      localShareRef.current.push(peerConnection.addTrack(track, localStream))
     })
 
      // Code for collecting ICE candidates below
@@ -47,10 +47,14 @@ export const createRoomCall = async (peerConnection, localStream, setRoomId, rem
       // Listening for remote session description below
       let unsubscribe = roomRef.onSnapshot(async snapshot => {
         const data = snapshot.data();
-        if(!peerConnection.currentRemoteDescription && data && data.answer){
-          // console.log('Got remote description: ', data.answer);
-        const rtcSessionDescription = new RTCSessionDescription(data.answer);
-        await peerConnection.setRemoteDescription(rtcSessionDescription);
+        if(peerConnection.iceConnectionState !== "closed"){
+
+          if(!peerConnection.currentRemoteDescription && data && data.answer){
+            // console.log('Got remote description: ', data.answer);
+          const rtcSessionDescription = new RTCSessionDescription(data.answer);
+          await peerConnection.setRemoteDescription(rtcSessionDescription);
+          }
+          
         }
       })
        // Listening for remote session description above
@@ -73,13 +77,13 @@ export const createRoomCall = async (peerConnection, localStream, setRoomId, rem
       }
 }
 
-export const joinRoomCall = async (peerConnection, localStream, roomId, remoteStream) => {
+export const joinRoomCall = async (peerConnection, localStream, roomId, remoteStream, localShareRef) => {
     const roomRef = firestore.collection("rooms").doc(roomId);
     const roomSnapshot = await roomRef.get();
 
     if(roomSnapshot.exists){
       localStream.getTracks().forEach(track => {
-        peerConnection.addTrack(track, localStream)
+        localShareRef.current.push(peerConnection.addTrack(track, localStream))
       })
 
       // Code for collecting ICE candidates below
@@ -97,7 +101,6 @@ export const joinRoomCall = async (peerConnection, localStream, roomId, remoteSt
       peerConnection.addEventListener("track", event => {
         // console.log('Got remote track:', event.streams[0]);
         event.streams[0].getTracks().forEach(track => {
-          console.log(track)
           // console.log('Add a track to the remoteStream:', track);
           remoteStream.addTrack(track);
         })
@@ -134,4 +137,25 @@ export const joinRoomCall = async (peerConnection, localStream, roomId, remoteSt
       
       return () => unsubscribe();
     }
-  }
+}
+
+export const registerPeerConnectionListeners = (peerConnection) => {
+  if(!peerConnection) return;
+  peerConnection.addEventListener("icegatheringstatechange", () => {
+    console.log(
+      `ICE gathering state changed: ${peerConnection.iceGatheringState}`);
+  })
+
+  peerConnection.addEventListener('connectionstatechange', () => {
+    console.log(`Connection state change: ${peerConnection.connectionState}`);
+  });
+
+  peerConnection.addEventListener('signalingstatechange', () => {
+    console.log(`Signaling state change: ${peerConnection.signalingState}`);
+  });
+
+  peerConnection.addEventListener('iceconnectionstatechange ', () => {
+    console.log(
+        `ICE connection state change: ${peerConnection.iceConnectionState}`);
+  });
+}

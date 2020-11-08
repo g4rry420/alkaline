@@ -22,6 +22,7 @@ function App() {
   const [roomIdData, setRoomIdData] = useState([]);
   const [con, setCon] = useState(false);
   const [con2, setCon2] = useState(false);
+  const [screenShare, setScreenShare] = useState(false);
 
 
   const localVideoRef = useRef();
@@ -32,17 +33,23 @@ function App() {
   const joinBtnRef = useRef();
   const hangBtnRef = useRef();
   const modalRef = useRef();
+  const screenShareRef = useRef();
+
+  const localShareRef = useRef([])
+
+  const copyRoomIdRef = useRef();
+  copyRoomIdRef.current = new Array(localShareRef.length)
+
 
   useEffect(() => {
     if(!peerConnection) return;
-
     // registerPeerConnectionListeners();
       if(con){
-        createRoomCall(peerConnection, localStream, setRoomId, remoteStream)
+        createRoomCall(peerConnection, localStream, setRoomId, remoteStream, localShareRef)
       }
       
       if(con2){
-        joinRoomCall(peerConnection, localStream, roomId, remoteStream)
+        joinRoomCall(peerConnection, localStream, roomId, remoteStream, localShareRef)
       }
        // Listen for remote ICE candidates above
   }, [peerConnection, con, con2])
@@ -52,6 +59,7 @@ function App() {
     createBtnRef.current.disabled = true;
     joinBtnRef.current.disabled = true;
     hangBtnRef.current.disabled = true;
+    screenShareRef.current.disabled = true;
     const unsubscribe = firestore.collection("rooms").onSnapshot(async querySnapshot => {
       let docArray = [];
       querySnapshot.forEach(doc => {
@@ -78,6 +86,7 @@ function App() {
       createBtnRef.current.disabled = false;
       joinBtnRef.current.disabled = false;
       hangBtnRef.current.disabled = false;
+      screenShareRef.current.disabled = false;
     } catch (error) {
       console.log(error)
     }
@@ -110,6 +119,11 @@ function App() {
     }
     //Delete a room on hangup above
 
+    openBtnRef.current.disabled = false;
+    createBtnRef.current.disabled = true;
+    joinBtnRef.current.disabled = true;
+    hangBtnRef.current.disabled = true;
+
     document.location.reload(true);
   }
 
@@ -120,46 +134,56 @@ function App() {
     setCon(true);
   }
 
-  // console.log(new RTCPeerConnection(configuration))
 
   const joinRoom = () => {
     modalRef.current.classList.add("modal-active-state");
   }
 
-  const registerPeerConnectionListeners = () => {
-    if(!peerConnection) return;
-    peerConnection.addEventListener("icegatheringstatechange", () => {
-      console.log(
-        `ICE gathering state changed: ${peerConnection.iceGatheringState}`);
+  const shareScreen = async () => {
+    let stream = await navigator.mediaDevices.getDisplayMedia({ cursor: true });
+    const screenTrack = await stream.getTracks()[0];
+    localShareRef.current.find(share => share.track.kind === "video").replaceTrack(screenTrack);
+    screenTrack.addEventListener("ended", () => {
+      localShareRef.current.find(share => share.track.kind === "video").replaceTrack(localStream.getTracks()[1]);
     })
-  
-    peerConnection.addEventListener('connectionstatechange', () => {
-      console.log(`Connection state change: ${peerConnection.connectionState}`);
-    });
-  
-    peerConnection.addEventListener('signalingstatechange', () => {
-      console.log(`Signaling state change: ${peerConnection.signalingState}`);
-    });
-  
-    peerConnection.addEventListener('iceconnectionstatechange ', () => {
-      console.log(
-          `ICE connection state change: ${peerConnection.iceConnectionState}`);
-    });
+    setScreenShare(true);
+  }
+
+  const stopShareScreen = () => {
+    setScreenShare(false);
+    localShareRef.current.find(share => share.track.kind === "video").replaceTrack(localStream.getTracks()[1]);
+  }
+
+  const copyRoomId = (id) => {
+    let selectedRoomId = copyRoomIdRef.current.filter(item => item.id === id);
+    let selection = window.getSelection();
+    selection.removeAllRanges();
+
+    let range = new Range();
+    range.selectNodeContents(selectedRoomId[0]);
+    selection.addRange(range);
+
+    document.execCommand("copy");
   }
 
   return (
-    <div className="App container">
+    <div className="App container-fluid">
       <Modal modalRef={modalRef} setPeerConnection={setPeerConnection} configuration={configuration} setCon2={setCon2} setRoomId={setRoomId} roomIdData={roomIdData}/>
       <div className="text-center main-heading">
         <h1 className="display-2">Welcome to the Alkaline.</h1>
         <p>Alkaline is video calling application that helps you get connected with people.</p>
       </div>
 
-      <div className="d-flex justify-content-between">
+      <div className="btn-container d-flex">
         <button ref={openBtnRef} onClick={openUserMedia}  className="btn btn-open">Open Microphone and Camera</button>
         <button ref={createBtnRef} onClick={createRoom}  className="btn btn-open">Create Room</button>
         <button ref={joinBtnRef} onClick={joinRoom}  className="btn btn-open">Join Room</button>
+        {
+          screenShare ? <button  onClick={stopShareScreen}  className="btn btn-open">Stop Sharing Screen</button>
+            :  <button ref={screenShareRef} onClick={shareScreen}  className="btn btn-open">Share Screen</button>
+        }
         <button ref={hangBtnRef} onClick={hangUp}  className="btn btn-open">Hangup</button>
+        
       </div>
       
       <div className="text-center">
@@ -175,9 +199,12 @@ function App() {
               <td className="p-2">Status</td>
             </tr>
             {
-              roomIdData.length ? roomIdData.map(data => (
+              roomIdData.length ? roomIdData.map((data, idx) => (
                 <tr  key={data.roomId}>
-                  <td className="p-2"> {data.roomId} </td>
+                  <td className="p-2 table-id-data"> 
+                    <span id={data.roomId}  ref={el => copyRoomIdRef.current[idx] = el}> {data.roomId} </span>
+                    <img onClick={() => copyRoomId(data.roomId)} src="https://www.lastpass.com/dist/images/cdn/img-icon-copy-@3x.png" alt="copy"/>
+                  </td>
                   <td className="p-2"> {data.answer ? "Not Available" : "Available"} </td>
                 </tr>
               )) : (
@@ -193,7 +220,7 @@ function App() {
 
       <div className="video-container d-flex justify-content-around">
         <Video videoRef={localVideoRef} />
-        <video ref={remoteVideoRef} className="remote-video m-3" autoPlay playsInline controls={false}></video>
+        <video ref={remoteVideoRef} className="remote-video m-3" autoPlay playsInline controls></video>
       </div>
     </div>
   );

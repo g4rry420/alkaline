@@ -20,14 +20,12 @@ export default function Modal({ modalRef, setPeerConnection, configuration, setC
 
     const {roomId} = create;
     
-    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         const {roomId} = create;
-
-        if(roomIdData.map(data => data.roomId === roomId && data.answer).length){
+        if(roomIdData.map(data => data.roomId === roomId && data.answer)[0] && roomIdData.map(data => data.roomId === roomId && data.answer)[0].type){
             alert("Please, enter different Room ID. This already exists.")
         }
         setRoomId(roomId)
