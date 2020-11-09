@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react"
+import "webrtc-adapter";
 
 import './App.css';
 import Modal from "./components/modal/modal.component"
