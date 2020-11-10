@@ -146,6 +146,7 @@ function App() {
     const screenTrack = await stream.getTracks()[0];
     localShareRef.current.find(share => share.track.kind === "video").replaceTrack(screenTrack);
     screenTrack.addEventListener("ended", () => {
+      setScreenShare(false);
       localShareRef.current.find(share => share.track.kind === "video").replaceTrack(localStream.getTracks()[1]);
     })
     setScreenShare(true);
